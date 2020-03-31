@@ -38,9 +38,9 @@ setup(
     use_scm_version=True,
 
     setup_requires=["setuptools_scm", "cffi>=1.0.0"],
-    cffi_modules=["{0}/{0}_build.py:ffibuilder".format(pkgname)],
+    cffi_modules=["%s/_rawmpi_build.py:ffibuilder" % pkgname],
     install_requires=["cffi>=1.0.0"],
 
-    url="http://github.com/parantapa/{0}".format(pkgname),
+    url="http://github.com/parantapa/%s" % pkgname,
     classifiers=classifiers
 )
