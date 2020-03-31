@@ -34,11 +34,12 @@ setup(
     long_description_content_type="text/x-rst",
 
     packages=[pkgname],
+    package_dir={'': 'src'},
 
     use_scm_version=True,
 
     setup_requires=["setuptools_scm", "cffi>=1.0.0"],
-    cffi_modules=["%s/_rawmpi_build.py:ffibuilder" % pkgname],
+    cffi_modules=["src/%s/_rawmpi_build.py:ffibuilder" % pkgname],
     install_requires=["cffi>=1.0.0"],
 
     url="http://github.com/parantapa/%s" % pkgname,
