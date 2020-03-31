@@ -1,4 +1,4 @@
-"""CFFI Wrapper for MPI."""
+"""A CFFI module for accessing MPI functions."""
 
 import os
 from cffi import FFI
@@ -71,7 +71,7 @@ ffibuilder.cdef("""
 """)
 
 ffibuilder.set_source(
-    "yapympi._rawmpi",
+    "yapympi.mpi",
     "#include <mpi.h>",
     libraries=["mpi"]
 )

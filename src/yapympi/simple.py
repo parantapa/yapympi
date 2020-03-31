@@ -1,6 +1,6 @@
 """A simple MPI interface."""
 
-from ._rawmpi import ffi, lib
+from .mpi import ffi, lib
 
 class Status:
     """MPI status object wrapper."""
