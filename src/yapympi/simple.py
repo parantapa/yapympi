@@ -142,7 +142,7 @@ def abort(comm=lib.MPI_COMM_WORLD, errorcode=1):
     check_error(ret)
 
 
-def comm_set_errhandler(comm=lib.MPI_COMM_WORLD, errhandler=lib.MPI_ERRORS_RETURN):
+def comm_set_errhandler(comm=lib.MPI_COMM_WORLD, errhandler=lib.MPI_ERRORS_ARE_FATAL):
     """Set the error handler for a communicator.
 
     Parameters
@@ -155,6 +155,29 @@ def comm_set_errhandler(comm=lib.MPI_COMM_WORLD, errhandler=lib.MPI_ERRORS_RETUR
     ret = lib.MPI_Comm_set_errhandler(comm, errhandler)
     check_error(ret)
 
+def comm_set_fatal_errhandler(comm=lib.MPI_COMM_WORLD):
+    """Set the fatal error handler for a communicator.
+
+    Parameters
+    ----------
+    comm : MPI_Comm
+        Communicator (handle)
+    """
+    errhandler = lib.MPI_ERRORS_ARE_FATAL
+    ret = lib.MPI_Comm_set_errhandler(comm, errhandler)
+    check_error(ret)
+
+def comm_set_nonfatal_errhandler(comm=lib.MPI_COMM_WORLD):
+    """Set the non fatal error handler for a communicator.
+
+    Parameters
+    ----------
+    comm : MPI_Comm
+        Communicator (handle)
+    """
+    errhandler = lib.MPI_ERRORS_RETURN
+    ret = lib.MPI_Comm_set_errhandler(comm, errhandler)
+    check_error(ret)
 
 def comm_rank(comm=lib.MPI_COMM_WORLD):
     """Determine the rank of the calling process in the communicator.
@@ -216,7 +239,7 @@ def send(buf, dest, tag, comm=lib.MPI_COMM_WORLD):
 
     Parameters
     ----------
-    buf : str or bytes or any object supporting buffer interface
+    buf : bytes or any object supporting buffer interface
         The send buffer
     dest : int
         Rank of destination
@@ -225,7 +248,7 @@ def send(buf, dest, tag, comm=lib.MPI_COMM_WORLD):
     comm : MPI_Comm
         Communicator (handle)
     """
-    if isinstance(buf, (str, bytes)):
+    if isinstance(buf, bytes):
         cbuf = ffi.new("char []", buf)
     else:
         cbuf = ffi.from_buffer("char []", buf)

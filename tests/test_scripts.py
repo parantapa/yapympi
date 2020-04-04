@@ -5,13 +5,16 @@ from subprocess import run
 
 CURDIR = Path(__file__).parent
 
-def mpirun(script, n):
-    print("Testing '%s' with %d ranks" % (script, n))
+def mpirun(script, nranks):
+    print("Testing '%s' with %d ranks" % (script, nranks))
 
     script = str(CURDIR / "scripts" / script)
-    cmd = ["mpiexec", "-n", str(n), "python", script]
+    cmd = ["mpiexec", "-n", str(nranks), "python", script]
     run(cmd, check=True)
 
-def test_hello():
-    mpirun("hello.py", 1)
-    mpirun("hello.py", 2)
+def test_hello1():
+    mpirun("hello1.py", 1)
+    mpirun("hello1.py", 2)
+
+def test_hello2():
+    mpirun("hello1.py", 2)

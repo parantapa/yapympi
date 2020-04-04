@@ -1,4 +1,4 @@
-"""Test a simple hello script."""
+"""Print rank, size and processor name on all nodes."""
 
 import yapympi.simple as mpi
 
