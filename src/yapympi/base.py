@@ -1,6 +1,6 @@
 """A Simple MPI interface."""
 
-from .mpi import ffi, lib
+from .cmpi import ffi, lib
 
 
 class MPIError(RuntimeError):
@@ -155,6 +155,7 @@ def comm_set_errhandler(comm=lib.MPI_COMM_WORLD, errhandler=lib.MPI_ERRORS_ARE_F
     ret = lib.MPI_Comm_set_errhandler(comm, errhandler)
     check_error(ret)
 
+
 def comm_set_fatal_errhandler(comm=lib.MPI_COMM_WORLD):
     """Set the fatal error handler for a communicator.
 
@@ -167,6 +168,7 @@ def comm_set_fatal_errhandler(comm=lib.MPI_COMM_WORLD):
     ret = lib.MPI_Comm_set_errhandler(comm, errhandler)
     check_error(ret)
 
+
 def comm_set_nonfatal_errhandler(comm=lib.MPI_COMM_WORLD):
     """Set the non fatal error handler for a communicator.
 
@@ -178,6 +180,7 @@ def comm_set_nonfatal_errhandler(comm=lib.MPI_COMM_WORLD):
     errhandler = lib.MPI_ERRORS_RETURN
     ret = lib.MPI_Comm_set_errhandler(comm, errhandler)
     check_error(ret)
+
 
 def comm_rank(comm=lib.MPI_COMM_WORLD):
     """Determine the rank of the calling process in the communicator.

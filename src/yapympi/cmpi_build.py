@@ -78,7 +78,7 @@ ffibuilder.cdef("""
 """)
 
 ffibuilder.set_source(
-    "yapympi.mpi",
+    "yapympi.cmpi",
     "#include <mpi.h>",
     libraries=["mpi"]
 )

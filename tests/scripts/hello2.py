@@ -1,6 +1,7 @@
 """Use blocking send recieve to send hello."""
 
-import yapympi.simple as mpi
+import yapympi.base as mpi
+
 
 def main():
     mpi.init()
@@ -19,6 +20,7 @@ def main():
         print(rank, buf)
     finally:
         mpi.finalize()
+
 
 if __name__ == "__main__":
     main()
