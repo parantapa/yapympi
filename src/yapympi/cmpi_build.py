@@ -65,6 +65,7 @@ ffibuilder.cdef("""
     int MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Request *request);
     int MPI_Wait(MPI_Request *request, MPI_Status *status);
     int MPI_Test(MPI_Request *request, int *flag, MPI_Status *status);
+    int MPI_Cancel(MPI_Request * request);
 
     int MPI_Waitany(int count, MPI_Request array_of_requests[], int *index, MPI_Status *status);
     int MPI_Waitsome(int incount, MPI_Request array_of_requests[], int *outcount, int array_of_indices[], MPI_Status array_of_statuses[]);
@@ -74,7 +75,6 @@ ffibuilder.cdef("""
     int MPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, int array_of_indices[], MPI_Status array_of_statuses[]);
     int MPI_Testall(int count, MPI_Request array_of_requests[], int *flag, MPI_Status array_of_statuses[]);
 
-    int MPI_Cancel(MPI_Request * request);
 """)
 
 ffibuilder.set_source(
