@@ -18,3 +18,6 @@ def test_hello1():
 
 def test_hello2():
     mpirun("hello1.py", 2)
+
+def test_hello3():
+    mpirun("hello1.py", 2)

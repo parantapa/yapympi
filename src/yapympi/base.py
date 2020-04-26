@@ -24,58 +24,6 @@ class MPIError(RuntimeError):
         return "MPI Error: %d: %s" % (self.errorcode, error_str)
 
 
-class MPIStatus:
-    """MPI Status object.
-
-    Attributes
-    ----------
-    source : int
-        Rank of source
-    tag : int
-        Message tag
-    error : int
-        MPI error code
-    count : int
-        Number received elements
-    """
-
-    def __init__(self, status):
-        self.status = status
-
-    def __repr__(self):
-        fmt = "MPIStatus(source=%d, tag=%d, error=%d, count=%d)"
-        return fmt % (self.source, self.tag, self.error, self.count)
-
-    @property
-    def source(self):
-        """Return the source."""
-        return self.status.MPI_SOURCE
-
-    @property
-    def tag(self):
-        """Return the tag."""
-        return self.status.MPI_TAG
-
-    @property
-    def error(self):
-        """Return the error."""
-        return self.status.MPI_ERROR
-
-    @property
-    def count(self):
-        """Return the count."""
-        cnt = ffi.new("int*")
-        datatype = lib.MPI_BYTE
-        ret = lib.MPI_Get_count(self.status, datatype, cnt)
-        check_error(ret)
-        return cnt[0]
-
-    def check_error(self):
-        """Raise MPIError if error is present."""
-        if self.error != lib.MPI_SUCCESS:
-            raise MPIError(self.error)
-
-
 def error_string(errorcode):
     """Return a string for a given error code.
 
@@ -114,6 +62,26 @@ def check_error(retcode):
     """
     if retcode != lib.MPI_SUCCESS:
         raise MPIError(retcode)
+
+
+def get_count(status):
+    """Get the number of "top level" elements.
+
+    Parameters
+    ----------
+    status : MPI_Status*
+        Return status of receive operation
+    
+    Returns
+    -------
+    count : int
+        Number of received bytes.
+    """
+    cnt = ffi.new("int*")
+    datatype = lib.MPI_BYTE
+    ret = lib.MPI_Get_count(status, datatype, cnt)
+    check_error(ret)
+    return cnt[0]
 
 
 def init():
@@ -447,6 +415,7 @@ def cancel(request):
     ret = lib.MPI_Cancel(request)
     check_error(ret)
 
+
 def waitany(requests, status=None):
     """Wait for any specified MPI Request to complete.
 
@@ -474,6 +443,7 @@ def waitany(requests, status=None):
     check_error(ret)
     return indx[0], status
 
+
 def waitall(requests, statuses=None):
     """Wait for all given MPI Requests to complete.
 
@@ -498,6 +468,7 @@ def waitall(requests, statuses=None):
     ret = lib.MPI_Waitall(count, requests, statuses)
     check_error(ret)
     return statuses
+
 
 def waitsome(requests, statuses=None):
     """Wait for some given MPI Requests to complete.
@@ -530,6 +501,7 @@ def waitsome(requests, statuses=None):
     indices = [indices[i] for i in range(outcount[0])]
     return indices, statuses
 
+
 def testany(requests, status=None):
     """Test for completion of any previdously initiated requests.
 
@@ -560,6 +532,7 @@ def testany(requests, status=None):
     check_error(ret)
     return bool(flag[0]), indx[0], status
 
+
 def testall(requests, statuses=None):
     """Test for the completion of all previously initiated requests.
 
@@ -588,6 +561,7 @@ def testall(requests, statuses=None):
     check_error(ret)
 
     return bool(flag[0]), statuses
+
 
 def testsome(requests, statuses=None):
     """Tests for some given requests to complete.

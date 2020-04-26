@@ -13,10 +13,12 @@ def main():
         rank = mpi.comm_rank()
         if rank == 0:
             buf = MSG
-            mpi.send(buf, dest=1, tag=0)
+            req = mpi.isend(buf, dest=1, tag=0)
+            mpi.wait(req)
         else:
             buf = bytearray(10)
-            status = mpi.recv(buf, source=0, tag=0)
+            req = mpi.irecv(buf, source=0, tag=0)
+            status = mpi.wait(req)
             assert mpi.get_count(status) == len(MSG)
             assert buf[:len(MSG)] == MSG
     finally:
