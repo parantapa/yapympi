@@ -311,7 +311,7 @@ def isend(buf, dest, tag, comm=lib.MPI_COMM_WORLD, request=None):
     if request is None:
         request = ffi.new("MPI_Request*")
 
-    ret = lib.MPI_Isend(buf, count, datatype, dest, tag, comm, request)
+    ret = lib.MPI_Isend(cbuf, count, datatype, dest, tag, comm, request)
     check_error(ret)
 
     return request
@@ -350,7 +350,7 @@ def irecv(
     datatype = lib.MPI_BYTE
     if request is None:
         request = ffi.new("MPI_Request*")
-    ret = lib.MPI_Irecv(buf, count, datatype, source, tag, comm, request)
+    ret = lib.MPI_Irecv(cbuf, count, datatype, source, tag, comm, request)
     check_error(ret)
     return request
 

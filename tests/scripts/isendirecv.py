@@ -1,4 +1,4 @@
-"""Use blocking send recieve to send hello."""
+"""Test non blocking send recv."""
 
 import yapympi.base as mpi
 
@@ -19,7 +19,7 @@ def main():
             buf = bytearray(10)
             req = mpi.irecv(buf, source=0, tag=0)
             status = mpi.wait(req)
-            assert mpi.get_count(status) == len(MSG)
+            assert mpi.get_count(status) == (len(MSG) + 1)
             assert buf[:len(MSG)] == MSG
     finally:
         mpi.finalize()

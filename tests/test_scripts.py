@@ -12,12 +12,17 @@ def mpirun(script, nranks):
     cmd = ["mpiexec", "-n", str(nranks), "python", script]
     run(cmd, check=True)
 
-def test_hello1():
-    mpirun("hello1.py", 1)
-    mpirun("hello1.py", 2)
+def test_hello():
+    mpirun("hello.py", 1)
+    mpirun("hello.py", 2)
+    mpirun("hello.py", 3)
 
-def test_hello2():
-    mpirun("hello1.py", 2)
+def test_sendrecv():
+    mpirun("sendrecv.py", 2)
 
-def test_hello3():
-    mpirun("hello1.py", 2)
+def test_isendirecv():
+    mpirun("isendirecv.py", 2)
+
+def test_bcast():
+    mpirun("bcast.py", 2)
+    mpirun("bcast.py", 3)

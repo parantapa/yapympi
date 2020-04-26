@@ -1,9 +1,8 @@
-"""Use blocking send recieve to send hello."""
+"""Use blocking bcast to send messages."""
 
 import yapympi.base as mpi
 
 MSG = "hello".encode("utf-8")
-
 
 def main():
     mpi.init()
@@ -13,11 +12,12 @@ def main():
         rank = mpi.comm_rank()
         if rank == 0:
             buf = MSG
-            mpi.send(buf, dest=1, tag=0)
+            req = mpi.ibcast(buf, 0)
+            mpi.wait(req)
         else:
-            buf = bytearray(10)
-            status = mpi.recv(buf, source=0, tag=0)
-            assert mpi.get_count(status) == len(MSG)
+            buf = bytearray(len(MSG) + 1)
+            req = mpi.ibcast(buf, 0)
+            mpi.wait(req)
             assert buf[:len(MSG)] == MSG
     finally:
         mpi.finalize()

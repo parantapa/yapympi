@@ -1,4 +1,4 @@
-"""Print rank, size and processor name on all nodes."""
+"""Print rank, size and processor name on all ranks."""
 
 import yapympi.base as mpi
 
