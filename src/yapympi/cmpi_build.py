@@ -1,29 +1,100 @@
 """A CFFI module for accessing MPI functions."""
 
+import os
+from subprocess import run
+from tempfile import NamedTemporaryFile
+
 from cffi import FFI
 
-from .get_mpi_handle_type import get_mpi_handle_type
-
 ffibuilder = FFI()
+
+
+def get_mpi_handle_type(tmpdir=None):
+    """Get the type to use for MPI handle types.
+
+    This method writes out a simple C code to determine the type
+    needed to represent MPI_COMM_WORLD for cffi.
+
+    Parameters
+    ----------
+    tmpdir : str
+        The directory in which the temporary C file
+        and the executeable file is to be created.
+
+    Returns
+    -------
+    type : str
+        "int" or "pointer"
+    """
+    c_compiler = os.environ.get("CC", "mpicc")
+
+    c_code = """
+#include <stdio.h>
+#include <stdint.h>
+#include <mpi.h>
+
+#define typename(x) _Generic((x), \
+	int8_t: "int", int16_t: "int", int32_t: "int", int64_t: "int", \
+	uint8_t: "int", uint16_t: "int", uint32_t: "int", uint64_t: "int", \
+	default: "pointer" \
+)
+
+int main(int argc, char *argv[])
+{
+	puts(typename(MPI_COMM_WORLD));
+	return 0;
+}
+""".strip()
+
+    c_file = NamedTemporaryFile(
+        mode="wt", encoding="utf-8", suffix=".c", delete=False, dir=tmpdir
+    )
+    try:
+        c_file.write(c_code)
+        c_file.close()
+
+        e_file = NamedTemporaryFile(delete=False, dir=tmpdir)
+        try:
+            e_file.close()
+
+            cmd = [c_compiler, "-o", e_file.name, c_file.name]
+            run(cmd, shell=False, check=True)
+
+            os.chmod(e_file.name, 0o700)
+
+            cmd = [e_file.name]
+            cp = run(cmd, shell=False, check=True, capture_output=True)
+
+            return cp.stdout.decode("utf-8").strip()
+        finally:
+            os.remove(e_file.name)
+    finally:
+        os.remove(c_file.name)
+
 
 mpi_handle_type = get_mpi_handle_type()
 
 if mpi_handle_type == "int":
-    ffibuilder.cdef("""
+    ffibuilder.cdef(
+        """
         typedef int... MPI_Comm;
         typedef int... MPI_Datatype;
         typedef int... MPI_Request;
         typedef int... MPI_Errhandler;
-    """)
-else: # mpi_handle_type == "pointer":
-    ffibuilder.cdef("""
+    """
+    )
+else:  # mpi_handle_type == "pointer":
+    ffibuilder.cdef(
+        """
         typedef ... *MPI_Comm;
         typedef ... *MPI_Datatype;
         typedef ... *MPI_Request;
         typedef ... *MPI_Errhandler;
-    """)
+    """
+    )
 
-ffibuilder.cdef("""
+ffibuilder.cdef(
+    """
     typedef struct {
         int MPI_SOURCE;
         int MPI_TAG;
@@ -77,13 +148,10 @@ ffibuilder.cdef("""
     int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
 
     int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request);
-""")
-
-ffibuilder.set_source(
-    "yapympi.cmpi",
-    "#include <mpi.h>",
-    libraries=["mpi"]
+"""
 )
+
+ffibuilder.set_source("yapympi.cmpi", "#include <mpi.h>", libraries=["mpi"])
 
 if __name__ == "__main__":
     ffibuilder.compile(verbose=True)
