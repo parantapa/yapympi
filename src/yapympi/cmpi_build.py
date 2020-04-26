@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile
 
 from cffi import FFI
 
-ffibuilder = FFI()
+FFIBUILDER = FFI()
 
 
 def get_mpi_handle_type(tmpdir=None):
@@ -72,10 +72,16 @@ int main(int argc, char *argv[])
         os.remove(c_file.name)
 
 
-mpi_handle_type = get_mpi_handle_type()
+# Do not execute get_mpi_handle_type(), which has "side effects"
+# Unless this script has been called as main.
+if __name__ == "__main__":
+    MPI_HANDLE_TYPE = get_mpi_handle_type()
+else:
+    # We use default MPICH's handle type as default
+    MPI_HANDLE_TYPE = "int"
 
-if mpi_handle_type == "int":
-    ffibuilder.cdef(
+if MPI_HANDLE_TYPE == "int":
+    FFIBUILDER.cdef(
         """
         typedef int... MPI_Comm;
         typedef int... MPI_Datatype;
@@ -83,8 +89,8 @@ if mpi_handle_type == "int":
         typedef int... MPI_Errhandler;
     """
     )
-else:  # mpi_handle_type == "pointer":
-    ffibuilder.cdef(
+else:  # MPI_HANDLE_TYPE == "pointer":
+    FFIBUILDER.cdef(
         """
         typedef ... *MPI_Comm;
         typedef ... *MPI_Datatype;
@@ -93,7 +99,7 @@ else:  # mpi_handle_type == "pointer":
     """
     )
 
-ffibuilder.cdef(
+FFIBUILDER.cdef(
     """
     typedef struct {
         int MPI_SOURCE;
@@ -151,7 +157,7 @@ ffibuilder.cdef(
 """
 )
 
-ffibuilder.set_source("yapympi.cmpi", "#include <mpi.h>", libraries=["mpi"])
+FFIBUILDER.set_source("yapympi.cmpi", "#include <mpi.h>", libraries=["mpi"])
 
 if __name__ == "__main__":
-    ffibuilder.compile(verbose=True)
+    FFIBUILDER.compile(verbose=True)
