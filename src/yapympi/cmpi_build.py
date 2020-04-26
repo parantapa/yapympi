@@ -1,28 +1,27 @@
 """A CFFI module for accessing MPI functions."""
 
-import os
 from cffi import FFI
+
+from .get_mpi_handle_type import get_mpi_handle_type
 
 ffibuilder = FFI()
 
-MPIDIST = os.environ["MPIDIST"].upper()
+mpi_handle_type = get_mpi_handle_type()
 
-if MPIDIST == "MPICH":
+if mpi_handle_type == "int":
     ffibuilder.cdef("""
         typedef int... MPI_Comm;
         typedef int... MPI_Datatype;
         typedef int... MPI_Request;
         typedef int... MPI_Errhandler;
     """)
-elif MPIDIST == "OPENMPI":
+else: # mpi_handle_type == "pointer":
     ffibuilder.cdef("""
         typedef ... *MPI_Comm;
         typedef ... *MPI_Datatype;
         typedef ... *MPI_Request;
         typedef ... *MPI_Errhandler;
     """)
-else:
-    raise ValueError("Unknown version: %s" % MPIDIST)
 
 ffibuilder.cdef("""
     typedef struct {

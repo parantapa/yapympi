@@ -21,7 +21,6 @@ Topic :: System :: Distributed Computing
 """.strip().split("\n")
 
 os.environ.setdefault("CC", "mpicc")
-os.environ.setdefault("MPIDIST", "MPICH")
 
 setup(
     name=pkgname,
