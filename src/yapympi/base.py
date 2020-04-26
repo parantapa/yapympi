@@ -71,7 +71,7 @@ def get_count(status):
     ----------
     status : MPI_Status*
         Return status of receive operation
-    
+
     Returns
     -------
     count : int
@@ -116,9 +116,9 @@ def comm_set_errhandler(comm=lib.MPI_COMM_WORLD, errhandler=lib.MPI_ERRORS_ARE_F
     Parameters
     ----------
     comm : MPI_Comm
-        Communicator (handle)
+        Communicator
     errhandler : MPI_Errhandler
-        New error handler for communicator (handle)
+        New error handler for communicator
     """
     ret = lib.MPI_Comm_set_errhandler(comm, errhandler)
     check_error(ret)
@@ -156,7 +156,7 @@ def comm_rank(comm=lib.MPI_COMM_WORLD):
     Parameters
     ----------
     comm : MPI_Comm
-        Communicator (handle)
+        Communicator
 
     Returns
     -------
@@ -175,7 +175,7 @@ def comm_size(comm=lib.MPI_COMM_WORLD):
     Parameters
     ----------
     comm : MPI_Comm
-        Communicator (handle)
+        Communicator
 
     Returns
     -------
@@ -217,7 +217,7 @@ def send(buf, dest, tag, comm=lib.MPI_COMM_WORLD):
     tag : int
         Message tag
     comm : MPI_Comm
-        Communicator (handle)
+        Communicator
     """
     if isinstance(buf, bytes):
         cbuf = ffi.new("char[]", buf)
@@ -248,7 +248,7 @@ def recv(
     tag : int
         Message tag
     comm : MPI_Comm
-        Communicator (handle)
+        Communicator
     status : MPI_Status*
         Status object
         If status is None a new status object is created.
@@ -274,7 +274,7 @@ def barrier(comm=lib.MPI_COMM_WORLD):
     Parameters
     ----------
     comm : MPI_Comm
-        Communicator (handle)
+        Communicator
     """
     ret = lib.MPI_Barrier(comm)
     check_error(ret)
@@ -292,15 +292,15 @@ def isend(buf, dest, tag, comm=lib.MPI_COMM_WORLD, request=None):
     tag : int
         Message tag
     comm : MPI_Comm
-        Communicator (handle)
+        Communicator
     request : MPI_Request*
-        Communication request (handle)
+        Communication request
         If request is None a new request object is created.
 
     Returns
     -------
     request : MPI_Request*
-        Communication request (handle)
+        Communication request
     """
     if isinstance(buf, bytes):
         cbuf = ffi.new("char[]", buf)
@@ -335,15 +335,15 @@ def irecv(
     tag : int
         Message tag
     comm : MPI_Comm
-        Communicator (handle)
+        Communicator
     request : MPI_Request*
-        Communication request (handle)
+        Communication request
         If request is None a new request object is created.
 
     Returns
     -------
     request : MPI_Request*
-        Communication request (handle).
+        Communication request
     """
     cbuf = ffi.from_buffer("char[]", buf, require_writable=True)
     count = len(cbuf)
@@ -361,7 +361,7 @@ def wait(request, status=None):
     Parameters
     ----------
     request : MPI_Request*
-        Communication request (handle)
+        Communication request
     status : MPI_Status*
         Status object
         If status is None a new status object is created.
@@ -384,8 +384,8 @@ def test(request, status=None):
     Parameters
     ----------
     request: MPI_Request*
-        Communication request (handle)
-    status: MPI_Status*
+        Communication request
+    status : MPI_Status*
         Status object
         If status is None a new status object is created.
 
@@ -410,7 +410,7 @@ def cancel(request):
     Parameters
     ----------
     request : MPI_Request*
-        Communication request (handle)
+        Communication request
     """
     ret = lib.MPI_Cancel(request)
     check_error(ret)
@@ -423,7 +423,7 @@ def waitany(requests, status=None):
     ----------
     requests : list of MPI_Request*
         Array of requests
-    status: MPI_Status*
+    status : MPI_Status*
         Status object
         If status is None a new status object is created.
 
@@ -509,7 +509,7 @@ def testany(requests, status=None):
     ----------
     requests : list of MPI_Request*
         Array of requests
-    status: MPI_Status*
+    status : MPI_Status*
         Status object
         If status is None a new status object is created.
 
@@ -593,3 +593,54 @@ def testsome(requests, statuses=None):
 
     indices = [indices[i] for i in range(outcount[0])]
     return indices, statuses
+
+def bcast(buf, root, comm=lib.MPI_COMM_WORLD):
+    """Broadcast a message from the process with rank "root" to all other processes of the communicator.
+
+    Parameters
+    ----------
+    buf : bytes or any object supporting buffer interface
+        Starting address of buffer
+    root : int
+        Rank of broadcast root
+    comm : MPI_Comm
+        Communicator
+    """
+    if root == comm_rank(comm):
+        cbuf = ffi.from_buffer("char[]", buf)
+    else:
+        cbuf = ffi.from_buffer("char[]", buf, require_writable=True)
+    count = len(cbuf)
+    datatype = lib.MPI_BYTE
+
+    ret = lib.MPI_Bcast(cbuf, count, datatype, root, comm)
+    check_error(ret)
+
+def ibcast(buf, root, comm=lib.MPI_COMM_WORLD, request=None):
+    """Broadcasts a message from the process with rank "root" to all other processes of the communicator in a nonblocking way.
+
+    Parameters
+    ----------
+    buf : bytes or any object supporting buffer interface
+        Starting address of buffer
+    root : int
+        Rank of broadcast root
+    comm : MPI_Comm
+        Communicator
+    request : MPI_Request*
+        Communication request
+        If request is None a new request object is created.
+    """
+    if root == comm_rank(comm):
+        cbuf = ffi.from_buffer("char[]", buf)
+    else:
+        cbuf = ffi.from_buffer("char[]", buf, require_writable=True)
+    count = len(cbuf)
+    datatype = lib.MPI_BYTE
+    if request is None:
+        request = ffi.new("MPI_Request*")
+
+    ret = lib.MPI_Ibcast(cbuf, count, datatype, root, comm, request)
+    check_error(ret)
+
+    return request
