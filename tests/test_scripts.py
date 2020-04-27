@@ -26,3 +26,7 @@ def test_isendirecv():
 def test_bcast():
     mpirun("bcast.py", 2)
     mpirun("bcast.py", 3)
+
+def test_ibcast():
+    mpirun("ibcast.py", 2)
+    mpirun("ibcast.py", 3)

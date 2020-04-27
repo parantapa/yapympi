@@ -64,13 +64,15 @@ def check_error(retcode):
         raise MPIError(retcode)
 
 
-def get_count(status):
+def get_count(status, datatype=lib.MPI_BYTE):
     """Get the number of "top level" elements.
 
     Parameters
     ----------
     status : MPI_Status*
         Return status of receive operation
+    datatype : MPI_Datatype
+        Datatype of each receive buffer element
 
     Returns
     -------
@@ -78,7 +80,6 @@ def get_count(status):
         Number of received bytes.
     """
     cnt = ffi.new("int*")
-    datatype = lib.MPI_BYTE
     ret = lib.MPI_Get_count(status, datatype, cnt)
     check_error(ret)
     return cnt[0]
@@ -205,7 +206,7 @@ def get_processor_name():
     return proc_name
 
 
-def send(buf, dest, tag, comm=lib.MPI_COMM_WORLD):
+def send(buf, dest, tag, comm=lib.MPI_COMM_WORLD, datatype=lib.MPI_BYTE):
     """Perform a blocking send.
 
     Parameters
@@ -218,13 +219,14 @@ def send(buf, dest, tag, comm=lib.MPI_COMM_WORLD):
         Message tag
     comm : MPI_Comm
         Communicator
+    datatype : MPI_Datatype
+        Datatype of each send buffer element
     """
     if isinstance(buf, bytes):
         cbuf = ffi.new("char[]", buf)
     else:
         cbuf = ffi.from_buffer("char[]", buf)
     count = len(cbuf)
-    datatype = lib.MPI_BYTE
 
     ret = lib.MPI_Send(cbuf, count, datatype, dest, tag, comm)
     check_error(ret)
@@ -235,6 +237,7 @@ def recv(
     source=lib.MPI_ANY_SOURCE,
     tag=lib.MPI_ANY_TAG,
     comm=lib.MPI_COMM_WORLD,
+    datatype=lib.MPI_BYTE,
     status=None,
 ):
     """Perform a blocking receive for a message.
@@ -249,6 +252,8 @@ def recv(
         Message tag
     comm : MPI_Comm
         Communicator
+    datatype : MPI_Datatype
+        Datatype of each receive buffer element
     status : MPI_Status*
         Status object
         If status is None a new status object is created.
@@ -260,7 +265,6 @@ def recv(
     """
     cbuf = ffi.from_buffer("char[]", buf, require_writable=True)
     count = len(cbuf)
-    datatype = lib.MPI_BYTE
     if status is None:
         status = ffi.new("MPI_Status*")
     ret = lib.MPI_Recv(cbuf, count, datatype, source, tag, comm, status)
@@ -280,7 +284,7 @@ def barrier(comm=lib.MPI_COMM_WORLD):
     check_error(ret)
 
 
-def isend(buf, dest, tag, comm=lib.MPI_COMM_WORLD, request=None):
+def isend(buf, dest, tag, comm=lib.MPI_COMM_WORLD, datatype=lib.MPI_BYTE, request=None):
     """Begin a nonblocking send.
 
     Parameters
@@ -293,6 +297,8 @@ def isend(buf, dest, tag, comm=lib.MPI_COMM_WORLD, request=None):
         Message tag
     comm : MPI_Comm
         Communicator
+    datatype : MPI_Datatype
+        Datatype of each send buffer element
     request : MPI_Request*
         Communication request
         If request is None a new request object is created.
@@ -307,7 +313,6 @@ def isend(buf, dest, tag, comm=lib.MPI_COMM_WORLD, request=None):
     else:
         cbuf = ffi.from_buffer("char[]", buf)
     count = len(cbuf)
-    datatype = lib.MPI_BYTE
     if request is None:
         request = ffi.new("MPI_Request*")
 
@@ -322,6 +327,7 @@ def irecv(
     source=lib.MPI_ANY_SOURCE,
     tag=lib.MPI_ANY_TAG,
     comm=lib.MPI_COMM_WORLD,
+    datatype=lib.MPI_BYTE,
     request=None,
 ):
     """Begin a nonblocking receive.
@@ -336,6 +342,8 @@ def irecv(
         Message tag
     comm : MPI_Comm
         Communicator
+    datatype : MPI_Datatype
+        Datatype of each receive buffer element
     request : MPI_Request*
         Communication request
         If request is None a new request object is created.
@@ -347,7 +355,6 @@ def irecv(
     """
     cbuf = ffi.from_buffer("char[]", buf, require_writable=True)
     count = len(cbuf)
-    datatype = lib.MPI_BYTE
     if request is None:
         request = ffi.new("MPI_Request*")
     ret = lib.MPI_Irecv(cbuf, count, datatype, source, tag, comm, request)
@@ -594,7 +601,8 @@ def testsome(requests, statuses=None):
     indices = [indices[i] for i in range(outcount[0])]
     return indices, statuses
 
-def bcast(buf, root, comm=lib.MPI_COMM_WORLD):
+
+def bcast(buf, root, comm=lib.MPI_COMM_WORLD, datatype=lib.MPI_BYTE):
     """Broadcast a message from the process with rank "root" to all other processes of the communicator.
 
     Parameters
@@ -605,18 +613,20 @@ def bcast(buf, root, comm=lib.MPI_COMM_WORLD):
         Rank of broadcast root
     comm : MPI_Comm
         Communicator
+    datatype : MPI_Datatype
+        Data type of buffer
     """
     if root == comm_rank(comm):
         cbuf = ffi.from_buffer("char[]", buf)
     else:
         cbuf = ffi.from_buffer("char[]", buf, require_writable=True)
     count = len(cbuf)
-    datatype = lib.MPI_BYTE
 
     ret = lib.MPI_Bcast(cbuf, count, datatype, root, comm)
     check_error(ret)
 
-def ibcast(buf, root, comm=lib.MPI_COMM_WORLD, request=None):
+
+def ibcast(buf, root, comm=lib.MPI_COMM_WORLD, datatype=lib.MPI_BYTE, request=None):
     """Broadcasts a message from the process with rank "root" to all other processes of the communicator in a nonblocking way.
 
     Parameters
@@ -627,6 +637,8 @@ def ibcast(buf, root, comm=lib.MPI_COMM_WORLD, request=None):
         Rank of broadcast root
     comm : MPI_Comm
         Communicator
+    datatype : MPI_Datatype
+        Data type of buffer
     request : MPI_Request*
         Communication request
         If request is None a new request object is created.
@@ -636,7 +648,6 @@ def ibcast(buf, root, comm=lib.MPI_COMM_WORLD, request=None):
     else:
         cbuf = ffi.from_buffer("char[]", buf, require_writable=True)
     count = len(cbuf)
-    datatype = lib.MPI_BYTE
     if request is None:
         request = ffi.new("MPI_Request*")
 

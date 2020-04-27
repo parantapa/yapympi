@@ -15,10 +15,10 @@ def main():
             req = mpi.ibcast(buf, 0)
             mpi.wait(req)
         else:
-            buf = bytearray(len(MSG) + 1)
+            buf = bytearray(len(MSG))
             req = mpi.ibcast(buf, 0)
             mpi.wait(req)
-            assert buf[:len(MSG)] == MSG
+            assert buf == MSG
     finally:
         mpi.finalize()
 

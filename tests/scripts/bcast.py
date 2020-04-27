@@ -14,9 +14,9 @@ def main():
             buf = MSG
             mpi.bcast(buf, 0)
         else:
-            buf = bytearray(len(MSG) + 1)
+            buf = bytearray(len(MSG))
             mpi.bcast(buf, 0)
-            assert buf[:len(MSG)] == MSG
+            assert buf == MSG
     finally:
         mpi.finalize()
 
