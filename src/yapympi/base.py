@@ -3,25 +3,53 @@
 from .cmpi import ffi, lib
 
 
-class MPIError(RuntimeError):
-    """MPI Runtime error.
+class MPIErrorBase(RuntimeError):
+    """Base class of MPI Error objects."""
+
+
+class MPIError(MPIErrorBase):
+    """MPI runtime error.
 
     Attributes
     ----------
-    errorcode : int
+    errcode : int
         A MPI error code
+    errstr : str
+        String representation of the error code
     """
 
-    def __init__(self, errorcode):
-        super().__init__(errorcode)
-        self.errorcode = errorcode
-
-    def __repr__(self):
-        return "MPIError(%d)" % self.errorcode
+    def __init__(self, errcode):
+        self.errcode = errcode
+        self.errorstr = error_string(self.errcode)
 
     def __str__(self):
-        error_str = error_string(self.errorcode)
-        return "MPI Error: %d: %s" % (self.errorcode, error_str)
+        return "MPI Error: %d: %s" % (self.errcode, self.errorstr)
+
+
+class MPIStatusErrors(MPIErrorBase):
+    """MPI runtime error in status.
+
+    Attributes
+    ----------
+    erridxs : list of int
+        List of indices where error occured
+    errcodes : list of int
+        List of MPI error codes
+    errstrs : list of str
+        List of string representations of the error codes
+    """
+
+    def __init__(self, erridxs, errcodes):
+        self.erridxs = erridxs
+        self.errcodes = errcodes
+        self.errstrs = [error_string(c) for c in self.errcodes]
+
+    def __str__(self):
+        x = zip(self.erridxs, self.errcodes, self.errstrs)
+        x = ["Index: %d; Error: %d: %s" % row for row in x]
+        x = "\n".join(x)
+
+        return "MPI Status Errors: %d errors\n%s" % (len(self.errcodes), x)
 
 
 def error_string(errorcode):
@@ -63,6 +91,56 @@ def check_error(retcode):
     if retcode != lib.MPI_SUCCESS:
         raise MPIError(retcode)
 
+
+def check_error_in_status(retcode, statuses):
+    """Check possible errors in status.
+
+    Parameters
+    ----------
+    retcode : int
+        Return code of an MPI function
+    statuses : MPI_Status[]
+        Array of MPI_Status objects.
+
+    Raises
+    ------
+    MPIStatusErrors
+        If there are errors in status
+    MPIError
+        For any other errors
+    """
+    if retcode == lib.MPI_SUCCESS:
+        return
+
+    if retcode == lib.MPI_ERR_IN_STATUS:
+        erridxs, errcodes = [], []
+        for idx in range(len(statuses)):
+            if statuses[idx].MPI_ERROR != lib.MPI_SUCCESS:
+                erridxs.append(idx)
+                errcodes.append(statuses[idx].MPI_ERROR)
+        raise MPIStatusErrors(erridxs, errcodes)
+
+    raise MPIError(retcode)
+
+def list_to_array(ctype, objs):
+    """Create an array of ctype[] form a list of ctype*.
+
+    Parameters
+    ----------
+    ctype : str
+        C type of the data.
+    objs : list of ctype*
+        A python list of ctype* objects
+
+    Returns
+    -------
+    ctype[]
+        A contiguous array of ctype objects
+    """
+    arr = ffi.new("%s[]" % ctype, len(objs))
+    for i, o in enumerate(objs):
+        arr[i] = o[0]
+    return arr
 
 def get_count(status, datatype=lib.MPI_BYTE):
     """Get the number of "top level" elements.
@@ -428,7 +506,7 @@ def waitany(requests, status=None):
 
     Parameters
     ----------
-    requests : list of MPI_Request*
+    requests : MPI_Request[]
         Array of requests
     status : MPI_Status*
         Status object
@@ -456,9 +534,9 @@ def waitall(requests, statuses=None):
 
     Parameters
     ----------
-    requests : list of MPI_Request*
+    requests : MPI_Request[]
         Array of requests
-    statuses : list of MPI_Status*
+    statuses : MPI_Status[]
         Array of status objects
         If statuses is None an array of statues object will be created.
 
@@ -473,8 +551,7 @@ def waitall(requests, statuses=None):
         assert len(requests) == len(statuses)
     count = len(requests)
     ret = lib.MPI_Waitall(count, requests, statuses)
-    check_error(ret)
-    return statuses
+    check_error_in_status(ret, statuses)
 
 
 def waitsome(requests, statuses=None):
@@ -482,9 +559,9 @@ def waitsome(requests, statuses=None):
 
     Parameters
     ----------
-    requests : list of MPI_Request*
+    requests : MPI_Request[]
         Array of requests
-    statuses : list of MPI_Status*
+    statuses : MPI_Status[]
         Array of status objects
         If statuses is None an array of statues object will be created.
 
@@ -503,7 +580,7 @@ def waitsome(requests, statuses=None):
     outcount = ffi.new("int*")
     indices = ffi.new("int[]", incount)
     ret = lib.MPI_Waitsome(incount, requests, outcount, indices, statuses)
-    check_error(ret)
+    check_error_in_status(ret, statuses)
 
     indices = [indices[i] for i in range(outcount[0])]
     return indices, statuses
@@ -514,7 +591,7 @@ def testany(requests, status=None):
 
     Parameters
     ----------
-    requests : list of MPI_Request*
+    requests : MPI_Request[]
         Array of requests
     status : MPI_Status*
         Status object
@@ -545,9 +622,9 @@ def testall(requests, statuses=None):
 
     Parameters
     ----------
-    requests : list of MPI_Request*
+    requests : MPI_Request[]
         Array of requests
-    statuses : list of MPI_Status*
+    statuses : MPI_Status[]
         Array of status objects
         If statuses is None an array of statues object will be created.
 
@@ -565,7 +642,7 @@ def testall(requests, statuses=None):
         assert len(requests) == len(statuses)
     count = len(requests)
     ret = lib.MPI_Testall(count, requests, flag, statuses)
-    check_error(ret)
+    check_error_in_status(ret, statuses)
 
     return bool(flag[0]), statuses
 
@@ -575,9 +652,9 @@ def testsome(requests, statuses=None):
 
     Parameters
     ----------
-    requests : list of MPI_Request*
+    requests : MPI_Request[]
         Array of requests
-    statuses : list of MPI_Status*
+    statuses : MPI_Status[]
         Array of status objects
         If statuses is None an array of statues object will be created.
 
@@ -596,7 +673,7 @@ def testsome(requests, statuses=None):
     outcount = ffi.new("int*")
     indices = ffi.new("int[]", incount)
     ret = lib.MPI_Testsome(incount, requests, outcount, indices, statuses)
-    check_error(ret)
+    check_error_in_status(ret, statuses)
 
     indices = [indices[i] for i in range(outcount[0])]
     return indices, statuses

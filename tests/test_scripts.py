@@ -30,3 +30,9 @@ def test_bcast():
 def test_ibcast():
     mpirun("ibcast.py", 2)
     mpirun("ibcast.py", 3)
+
+def test_waitanyall():
+    mpirun("waitanyall.py", 2)
+
+def test_waitsomeall():
+    mpirun("waitsomeall.py", 2)

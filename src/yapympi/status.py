@@ -24,8 +24,8 @@ class MPIStatus:
 
         Parameters
         ----------
-        status : MPI_Status*
-            The MPI_Status* object to wrap
+        status : MPI_Status or MPI_Status*
+            The MPI_Status object to wrap
         datatype : MPI_Datatype
             The datatype to use for computing count
         """
@@ -55,7 +55,11 @@ class MPIStatus:
     def count(self):
         """Return the count."""
         cnt = ffi.new("int*")
-        ret = lib.MPI_Get_count(self.status, self.datatype, cnt)
+        if ffi.typeof(self.status) is ffi.typeof("MPI_Status"):
+            status_ptr = ffi.addressof(self.status)
+        else:
+            status_ptr = self.status
+        ret = lib.MPI_Get_count(status_ptr, self.datatype, cnt)
         check_error(ret)
         return cnt[0]
 
