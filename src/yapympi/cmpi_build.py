@@ -119,6 +119,7 @@ FFIBUILDER.cdef(
     const int MPI_MAX_PROCESSOR_NAME;
     const int MPI_MAX_ERROR_STRING;
     const int MPI_SUCCESS;
+    const int MPI_ERR_IN_STATUS;
 
     int MPI_Error_string(int errorcode, char *string, int *resultlen);
     int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
