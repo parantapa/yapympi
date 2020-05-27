@@ -23,14 +23,6 @@ def test_sendrecv():
 def test_isendirecv():
     mpirun("isendirecv.py", 2)
 
-def test_bcast():
-    mpirun("bcast.py", 2)
-    mpirun("bcast.py", 3)
-
-def test_ibcast():
-    mpirun("ibcast.py", 2)
-    mpirun("ibcast.py", 3)
-
 def test_waitanyall():
     mpirun("waitanyall.py", 2)
 

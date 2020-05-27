@@ -8,6 +8,24 @@ from cffi import FFI
 
 FFIBUILDER = FFI()
 
+COMM_WORLD_TYPE_C_CODE = """
+#include <stdio.h>
+#include <stdint.h>
+#include <mpi.h>
+
+#define typename(x) _Generic((x), \
+	int8_t: "int", int16_t: "int", int32_t: "int", int64_t: "int", \
+	uint8_t: "int", uint16_t: "int", uint32_t: "int", uint64_t: "int", \
+	default: "pointer" \
+)
+
+int main(int argc, char *argv[])
+{
+	puts(typename(MPI_COMM_WORLD));
+	return 0;
+}
+""".strip()
+
 
 def get_mpi_handle_type(tmpdir=None):
     """Get the type to use for MPI handle types.
@@ -28,29 +46,11 @@ def get_mpi_handle_type(tmpdir=None):
     """
     c_compiler = os.environ.get("CC", "mpicc")
 
-    c_code = """
-#include <stdio.h>
-#include <stdint.h>
-#include <mpi.h>
-
-#define typename(x) _Generic((x), \
-	int8_t: "int", int16_t: "int", int32_t: "int", int64_t: "int", \
-	uint8_t: "int", uint16_t: "int", uint32_t: "int", uint64_t: "int", \
-	default: "pointer" \
-)
-
-int main(int argc, char *argv[])
-{
-	puts(typename(MPI_COMM_WORLD));
-	return 0;
-}
-""".strip()
-
     c_file = NamedTemporaryFile(
         mode="wt", encoding="utf-8", suffix=".c", delete=False, dir=tmpdir
     )
     try:
-        c_file.write(c_code)
+        c_file.write(COMM_WORLD_TYPE_C_CODE)
         c_file.close()
 
         e_file = NamedTemporaryFile(delete=False, dir=tmpdir)
@@ -151,10 +151,6 @@ FFIBUILDER.cdef(
     int MPI_Testany(int count, MPI_Request array_of_requests[], int *index, int *flag, MPI_Status *status);
     int MPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, int array_of_indices[], MPI_Status array_of_statuses[]);
     int MPI_Testall(int count, MPI_Request array_of_requests[], int *flag, MPI_Status array_of_statuses[]);
-
-    int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
-
-    int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request);
 """
 )
 
