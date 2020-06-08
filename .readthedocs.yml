@@ -1,0 +1,16 @@
+version: 2
+
+sphinx:
+  configuration: docs/source/conf.py
+
+formats: all
+
+python:
+  version: 3.8
+  install:
+    - requirements: docs/requirements.txt
+    - method: pip
+      path: .
+
+conda:
+  environment: docs/environment.yml
