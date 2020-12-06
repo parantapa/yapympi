@@ -1,8 +1,7 @@
-"""Define a wrapper class for easyily using MPI_Status objects."""
+"""Python wrapper for MPI_Status objects."""
 
 from .cmpi import ffi, lib
 from .base import MPIError, check_error
-
 
 class MPIStatus:
     """MPI Status object.
@@ -29,39 +28,23 @@ class MPIStatus:
         datatype : MPI_Datatype
             The datatype to use for computing count
         """
-        self.status = status
-        self.datatype = datatype
+        self.source = status.MPI_SOURCE
+        self.tag = status.MPI_TAG
+        self.error = status.MPI_ERROR
+
+        cnt = ffi.new("int*")
+        if ffi.typeof(status) is ffi.typeof("MPI_Status"):
+            status_p = ffi.addressof(status)
+        else:
+            status_p = status
+        retcode = lib.MPI_Get_count(status_p, datatype, cnt)
+        if retcode != lib.MPI_SUCCESS:
+            raise MPIError(retcode)
+        self.count = cnt[0]
 
     def __repr__(self):
         fmt = "MPIStatus(source=%d, tag=%d, error=%d, count=%d)"
         return fmt % (self.source, self.tag, self.error, self.count)
-
-    @property
-    def source(self):
-        """Return the source."""
-        return self.status.MPI_SOURCE
-
-    @property
-    def tag(self):
-        """Return the tag."""
-        return self.status.MPI_TAG
-
-    @property
-    def error(self):
-        """Return the error."""
-        return self.status.MPI_ERROR
-
-    @property
-    def count(self):
-        """Return the count."""
-        cnt = ffi.new("int*")
-        if ffi.typeof(self.status) is ffi.typeof("MPI_Status"):
-            status_ptr = ffi.addressof(self.status)
-        else:
-            status_ptr = self.status
-        ret = lib.MPI_Get_count(status_ptr, self.datatype, cnt)
-        check_error(ret)
-        return cnt[0]
 
     def check_error(self):
         """Raise MPIError if error is present."""
